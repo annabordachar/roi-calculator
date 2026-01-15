@@ -1,0 +1,91 @@
+type,brand,model,name,price_new,price_refurb,co2_new,co2_refurb,lifespan_new,lifespan_refurb,power_on,power_standby,source_co2
+screen,Dell,U2722D,Dell UltraSharp 27" 4K,599,280,350,35,72,60,0.16,0.005,ADEME Base Empreinte
+screen,Dell,P2423D,Dell Professional 24" QHD,349,160,280,28,72,60,0.12,0.004,ADEME Base Empreinte
+screen,Dell,P2723QE,Dell 27" 4K USB-C Hub,579,270,340,34,72,60,0.15,0.005,ADEME Base Empreinte
+screen,Dell,S2722QC,Dell 27" 4K USB-C,449,210,320,32,72,60,0.14,0.005,ADEME Base Empreinte
+screen,Dell,U3223QE,Dell UltraSharp 32" 4K,899,420,420,42,72,60,0.22,0.006,ADEME Base Empreinte
+screen,HP,E27m G4,HP E27m 27" QHD,429,200,290,29,72,60,0.13,0.004,ADEME Base Empreinte
+screen,HP,Z27k G3,HP Z27k 27" 4K USB-C,599,280,350,35,72,60,0.16,0.005,ADEME Base Empreinte
+screen,LG,27UK850-W,LG 27" 4K UHD IPS,449,210,330,33,72,60,0.15,0.005,ADEME Base Empreinte
+screen,Samsung,S27R650,Samsung 27" Business,319,150,270,27,72,60,0.11,0.004,ADEME Base Empreinte
+screen,Philips,272E1SA,Philips 27" Full HD,189,90,220,22,60,48,0.10,0.003,ADEME Base Empreinte
+smartphone,Apple,iPhone 15 Pro,Apple iPhone 15 Pro,1229,750,80,8,48,36,0.005,0.001,ADEME 2024
+smartphone,Apple,iPhone 15,Apple iPhone 15,969,590,75,7.5,48,36,0.005,0.001,ADEME 2024
+smartphone,Apple,iPhone 14,Apple iPhone 14,869,520,72,7.2,48,36,0.005,0.001,ADEME 2024
+smartphone,Apple,iPhone SE,Apple iPhone SE 2022,529,320,57,5.7,48,36,0.004,0.001,ADEME 2024
+smartphone,Samsung,Galaxy S24 Ultra,Samsung Galaxy S24 Ultra,1469,880,85,8.5,48,36,0.006,0.001,ADEME 2024
+smartphone,Samsung,Galaxy S24,Samsung Galaxy S24,899,540,78,7.8,48,36,0.005,0.001,ADEME 2024
+smartphone,Samsung,Galaxy A54,Samsung Galaxy A54 5G,499,300,65,6.5,48,36,0.005,0.001,ADEME 2024
+smartphone,Google,Pixel 8 Pro,Google Pixel 8 Pro,1099,660,79,7.9,48,36,0.005,0.001,ADEME 2024
+smartphone,Google,Pixel 8,Google Pixel 8,799,480,74,7.4,48,36,0.005,0.001,ADEME 2024
+smartphone,Fairphone,Fairphone 5,Fairphone 5 (modulaire),699,450,45,4.5,60,48,0.005,0.001,Fairphone LCA
+tablet,Apple,iPad Pro 12.9,Apple iPad Pro 12.9" M2,1329,800,110,11,60,48,0.015,0.003,ADEME Base Empreinte
+tablet,Apple,iPad Pro 11,Apple iPad Pro 11" M2,1029,620,95,9.5,60,48,0.012,0.002,ADEME Base Empreinte
+tablet,Apple,iPad Air,Apple iPad Air M1,769,460,78,7.8,60,48,0.010,0.002,ADEME Base Empreinte
+tablet,Apple,iPad 10,Apple iPad 10ème gen,589,350,63,6.3,60,48,0.008,0.002,ADEME Base Empreinte
+tablet,Samsung,Galaxy Tab S9 Ultra,Samsung Galaxy Tab S9 Ultra,1279,770,105,10.5,60,48,0.014,0.003,ADEME Base Empreinte
+tablet,Samsung,Galaxy Tab S9,Samsung Galaxy Tab S9,949,570,88,8.8,60,48,0.011,0.002,ADEME Base Empreinte
+tablet,Samsung,Galaxy Tab A9+,Samsung Galaxy Tab A9+,299,180,52,5.2,48,36,0.007,0.002,ADEME Base Empreinte
+tablet,Microsoft,Surface Pro 9,Microsoft Surface Pro 9,1149,690,120,12,60,48,0.015,0.003,ADEME Base Empreinte
+tablet,Lenovo,Tab P12 Pro,Lenovo Tab P12 Pro,749,450,85,8.5,60,48,0.012,0.002,ADEME Base Empreinte
+switch_router,Cisco,C9200L-24P,Cisco Catalyst 9200L 24 ports PoE+,2890,1200,95,9.5,72,60,0.045,0.020,Boavizta
+switch_router,Cisco,C9200L-48P,Cisco Catalyst 9200L 48 ports PoE+,4590,1900,125,12.5,72,60,0.065,0.025,Boavizta
+switch_router,Cisco,CBS350-24T,Cisco Business 350 24 ports,599,280,55,5.5,72,60,0.018,0.008,Boavizta
+switch_router,Cisco,CBS350-48T,Cisco Business 350 48 ports,899,420,72,7.2,72,60,0.028,0.012,Boavizta
+switch_router,HP,Aruba 2930F-24G,HPE Aruba 2930F 24G PoE+,1890,780,85,8.5,72,60,0.038,0.015,Boavizta
+switch_router,HP,Aruba 2930F-48G,HPE Aruba 2930F 48G PoE+,2890,1200,110,11,72,60,0.055,0.022,Boavizta
+switch_router,Netgear,GS324TP,Netgear 24 ports PoE+ Smart,449,210,48,4.8,72,60,0.022,0.010,Boavizta
+switch_router,Ubiquiti,USW-Pro-24-POE,Ubiquiti UniFi Pro 24 PoE,699,330,52,5.2,72,60,0.025,0.010,Boavizta
+switch_router,TP-Link,TL-SG3428MP,TP-Link JetStream 28 ports PoE+,549,260,45,4.5,72,60,0.035,0.015,Boavizta
+switch_router,Dell,N1124P-ON,Dell Networking N1124P 24 ports,789,370,58,5.8,72,60,0.028,0.012,Boavizta
+phone,Cisco,CP-8845,Cisco IP Phone 8845 Video,389,180,25,2.5,72,60,0.008,0.002,Boavizta
+phone,Cisco,CP-8841,Cisco IP Phone 8841,299,140,22,2.2,72,60,0.006,0.002,Boavizta
+phone,Cisco,CP-8811,Cisco IP Phone 8811,179,85,18,1.8,72,60,0.005,0.001,Boavizta
+phone,Cisco,CP-7841,Cisco IP Phone 7841,159,75,16,1.6,72,60,0.004,0.001,Boavizta
+phone,Poly,VVX 450,Poly VVX 450 Business IP,249,120,20,2.0,72,60,0.006,0.002,Boavizta
+phone,Poly,VVX 350,Poly VVX 350 Business IP,179,85,17,1.7,72,60,0.005,0.001,Boavizta
+phone,Yealink,T58W,Yealink T58W Smart Business,329,155,23,2.3,72,60,0.007,0.002,Boavizta
+phone,Yealink,T54W,Yealink T54W Prime Business,189,90,18,1.8,72,60,0.005,0.001,Boavizta
+phone,Yealink,T46U,Yealink T46U IP Phone,149,70,15,1.5,72,60,0.004,0.001,Boavizta
+phone,Grandstream,GXP2170,Grandstream GXP2170 Enterprise,129,60,14,1.4,60,48,0.004,0.001,Boavizta
+refurbished_smartphone,Apple,iPhone 13 Pro Refurb,Apple iPhone 13 Pro Reconditionné,650,,8,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Apple,iPhone 13 Refurb,Apple iPhone 13 Reconditionné,520,,7.5,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Apple,iPhone 12 Refurb,Apple iPhone 12 Reconditionné,420,,7,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Samsung,Galaxy S23 Refurb,Samsung Galaxy S23 Reconditionné,580,,7.8,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Samsung,Galaxy S22 Refurb,Samsung Galaxy S22 Reconditionné,450,,7.5,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Samsung,Galaxy A53 Refurb,Samsung Galaxy A53 Reconditionné,280,,6,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Google,Pixel 7 Pro Refurb,Google Pixel 7 Pro Reconditionné,550,,7.5,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Google,Pixel 7 Refurb,Google Pixel 7 Reconditionné,420,,7,,36,,0.005,0.001,ADEME (10% neuf)
+refurbished_smartphone,Backmarket,Grade A Premium,Smartphone Grade A (toutes marques),400,,6,,36,,0.005,0.001,Backmarket
+refurbished_smartphone,Backmarket,Grade B Standard,Smartphone Grade B (toutes marques),300,,6,,36,,0.005,0.001,Backmarket
+refurbished_screen,Dell,U2722D Refurb,Dell UltraSharp 27" Reconditionné,280,,35,,72,,0.16,0.005,ADEME (10% neuf)
+refurbished_screen,Dell,P2423D Refurb,Dell Professional 24" Reconditionné,160,,28,,72,,0.12,0.004,ADEME (10% neuf)
+refurbished_screen,HP,E27m G4 Refurb,HP E27m 27" Reconditionné,200,,29,,72,,0.13,0.004,ADEME (10% neuf)
+refurbished_screen,LG,27UK850 Refurb,LG 27" 4K Reconditionné,210,,33,,72,,0.15,0.005,ADEME (10% neuf)
+refurbished_screen,Samsung,S27R650 Refurb,Samsung 27" Reconditionné,150,,27,,72,,0.11,0.004,ADEME (10% neuf)
+refurbished_screen,Philips,272E1SA Refurb,Philips 27" Reconditionné,90,,22,,60,,0.10,0.003,ADEME (10% neuf)
+refurbished_screen,Backmarket,24 pouces Grade A,Écran 24" Grade A Reconditionné,120,,25,,72,,0.12,0.004,Backmarket
+refurbished_screen,Backmarket,27 pouces Grade A,Écran 27" Grade A Reconditionné,180,,30,,72,,0.14,0.005,Backmarket
+refurbished_screen,Backmarket,27 pouces Grade B,Écran 27" Grade B Reconditionné,140,,30,,60,,0.14,0.005,Backmarket
+refurbished_screen,Backmarket,32 pouces Grade A,Écran 32" Grade A Reconditionné,250,,40,,72,,0.18,0.006,Backmarket
+refurbished_switch_router,Cisco,C9200L-24P Refurb,Cisco Catalyst 9200L 24p Reconditionné,1200,,9.5,,84,,0.045,0.020,Boavizta (10% neuf)
+refurbished_switch_router,Cisco,CBS350-24T Refurb,Cisco Business 350 24p Reconditionné,280,,5.5,,84,,0.018,0.008,Boavizta (10% neuf)
+refurbished_switch_router,HP,Aruba 2930F Refurb,HPE Aruba 2930F Reconditionné,780,,8.5,,84,,0.038,0.015,Boavizta (10% neuf)
+refurbished_switch_router,Netgear,GS324TP Refurb,Netgear 24p PoE+ Reconditionné,210,,4.8,,84,,0.022,0.010,Boavizta (10% neuf)
+refurbished_switch_router,Ubiquiti,USW-Pro-24 Refurb,Ubiquiti UniFi Pro 24 Reconditionné,330,,5.2,,84,,0.025,0.010,Boavizta (10% neuf)
+refurbished_switch_router,Dell,N1124P Refurb,Dell Networking Reconditionné,370,,5.8,,84,,0.028,0.012,Boavizta (10% neuf)
+refurbished_switch_router,Backmarket,Switch 24p Grade A,Switch 24 ports Grade A,250,,5,,84,,0.020,0.010,Backmarket
+refurbished_switch_router,Backmarket,Switch 48p Grade A,Switch 48 ports Grade A,400,,8,,84,,0.035,0.015,Backmarket
+refurbished_switch_router,Backmarket,Router Pro Grade A,Routeur Pro Grade A Reconditionné,300,,6,,84,,0.025,0.012,Backmarket
+refurbished_switch_router,Backmarket,Router Standard Grade B,Routeur Standard Grade B,180,,5,,72,,0.020,0.010,Backmarket
+meeting_room_screen,Samsung,QM85R,Samsung 85" 4K UHD Professional,4500,2200,650,65,72,60,0.35,0.015,ADEME Pro Display
+meeting_room_screen,Samsung,QM75R,Samsung 75" 4K UHD Professional,3200,1600,550,55,72,60,0.30,0.012,ADEME Pro Display
+meeting_room_screen,Samsung,QM65R,Samsung 65" 4K UHD Professional,2200,1100,480,48,72,60,0.25,0.010,ADEME Pro Display
+meeting_room_screen,LG,86UH5F,LG 86" 4K UHD Commercial,5500,2700,700,70,72,60,0.40,0.018,ADEME Pro Display
+meeting_room_screen,LG,75UH5F,LG 75" 4K UHD Commercial,3500,1750,580,58,72,60,0.32,0.014,ADEME Pro Display
+meeting_room_screen,LG,65UH5F,LG 65" 4K UHD Commercial,2400,1200,500,50,72,60,0.26,0.011,ADEME Pro Display
+meeting_room_screen,Sony,FW-85BZ40H,Sony BRAVIA 85" 4K Pro,6000,3000,720,72,72,60,0.42,0.020,ADEME Pro Display
+meeting_room_screen,Sony,FW-75BZ40H,Sony BRAVIA 75" 4K Pro,4200,2100,600,60,72,60,0.34,0.015,ADEME Pro Display
+meeting_room_screen,Dell,C7520QT,Dell 75" 4K Interactive Touch,4800,2400,620,62,72,60,0.36,0.016,ADEME Pro Display
+meeting_room_screen,Microsoft,Surface Hub 2S 85,Microsoft Surface Hub 2S 85",12000,6000,850,85,72,60,0.50,0.025,Microsoft LCA
+
