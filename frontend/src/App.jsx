@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Leaf, Calculator, Package, Shield, User, LogOut, Menu, X, BarChart3, GitCompare, UserCircle, Home } from 'lucide-react'
+import { Leaf, Calculator, Package, Shield, User, LogOut, Menu, X, BarChart3, GitCompare, UserCircle, Home, Server } from 'lucide-react'
 import ROICalculator from './components/ROICalculator'
 import Results from './components/Results'
 import Marketplace from './components/Marketplace'
@@ -11,6 +11,7 @@ import Chatbot from './components/Chatbot'
 import CompareMode from './components/CompareMode'
 import MyImpact from './components/MyImpact'
 import Homepage from './components/Homepage'
+import ScraperDashboard from './components/ScraperDashboard'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
@@ -83,12 +84,20 @@ function App() {
                 label="Marketplace"
               />
               {user?.role === 'admin' && (
-                <NavButton 
-                  active={currentPage === 'admin'}
-                  onClick={() => setCurrentPage('admin')}
-                  icon={Shield}
-                  label="Admin"
-                />
+                <>
+                  <NavButton 
+                    active={currentPage === 'admin'}
+                    onClick={() => setCurrentPage('admin')}
+                    icon={Shield}
+                    label="Admin"
+                  />
+                  <NavButton 
+                    active={currentPage === 'scraper'}
+                    onClick={() => setCurrentPage('scraper')}
+                    icon={Server}
+                    label="Scraper"
+                  />
+                </>
               )}
             </nav>
 
@@ -183,12 +192,20 @@ function App() {
                     label="Marketplace"
                   />
                   {user?.role === 'admin' && (
-                    <MobileNavButton 
-                      active={currentPage === 'admin'}
-                      onClick={() => { setCurrentPage('admin'); setMobileMenuOpen(false); }}
-                      icon={Shield}
-                      label="Admin"
-                    />
+                    <>
+                      <MobileNavButton 
+                        active={currentPage === 'admin'}
+                        onClick={() => { setCurrentPage('admin'); setMobileMenuOpen(false); }}
+                        icon={Shield}
+                        label="Admin"
+                      />
+                      <MobileNavButton 
+                        active={currentPage === 'scraper'}
+                        onClick={() => { setCurrentPage('scraper'); setMobileMenuOpen(false); }}
+                        icon={Server}
+                        label="Scraper"
+                      />
+                    </>
                   )}
                 </nav>
                 <div className="mt-4 pt-4 border-t border-lvmh-charcoal">
@@ -307,6 +324,17 @@ function App() {
               exit={{ opacity: 0 }}
             >
               <MyImpact />
+            </motion.div>
+          )}
+
+          {currentPage === 'scraper' && user?.role === 'admin' && (
+            <motion.div
+              key="scraper"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ScraperDashboard />
             </motion.div>
           )}
         </AnimatePresence>

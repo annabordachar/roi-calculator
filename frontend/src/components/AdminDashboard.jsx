@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Package, Clock, CheckCircle, XCircle, Plus, Edit, Trash2, 
-  AlertCircle, Users, ChevronDown, Loader2, X 
+  AlertCircle, Users, ChevronDown, Loader2, X, ShoppingCart,
+  Download, BarChart3, Building2
 } from 'lucide-react'
 import axios from 'axios'
 
@@ -30,6 +31,10 @@ export default function AdminDashboard({ user }) {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [scrapedProducts, setScrapedProducts] = useState([])
+  const [allOrders, setAllOrders] = useState(null)
+  const [loadingScraped, setLoadingScraped] = useState(false)
+  const [loadingOrders, setLoadingOrders] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -73,6 +78,81 @@ export default function AdminDashboard({ user }) {
       fetchData()
     } catch (error) {
       console.error('Error deleting item:', error)
+    }
+  }
+
+  const loadScrapedProducts = async () => {
+    setLoadingScraped(true)
+    try {
+      const response = await axios.get(`${API_URL}/api/scraped-products`)
+      setScrapedProducts(response.data.products || [])
+    } catch (error) {
+      console.error('Error loading scraped products:', error)
+    } finally {
+      setLoadingScraped(false)
+    }
+  }
+
+  const handleAddToCatalog = async (product, equipmentType = 'laptop') => {
+    if (!confirm(`Ajouter "${product.name}" au catalogue d'équipements ?`)) return
+    
+    try {
+      // Estimate CO2 values based on equipment type
+      const co2_estimates = {
+        laptop: 193,
+        screen: 350,
+        smartphone: 80,
+        tablet: 63,
+        switch_router: 60,
+        landline_phone: 20
+      }
+      
+      const co2_new = co2_estimates[equipmentType] || 193
+      const co2_refurb = co2_new * 0.1
+      
+      // Estimate lifespan based on type
+      const lifespan_estimates = {
+        laptop: 60,
+        screen: 72,
+        smartphone: 48,
+        tablet: 60,
+        switch_router: 72,
+        landline_phone: 72
+      }
+      
+      const request = {
+        name: product.name,
+        type: equipmentType,
+        brand: product.vendor || 'Dell',
+        model: product.model || '',
+        price_new: product.price,
+        price_refurb: product.price * 0.5, // Estimate 50% for refurbished
+        co2_new: co2_new,
+        co2_refurb: co2_refurb,
+        lifespan_new: lifespan_estimates[equipmentType] || 60,
+        lifespan_refurb: (lifespan_estimates[equipmentType] || 60) - 12,
+        power_on: equipmentType === 'screen' ? 0.16 : 0.05,
+        power_standby: equipmentType === 'screen' ? 0.005 : 0.003,
+        source_co2: 'ADEME'
+      }
+      
+      await axios.post(`${API_URL}/api/catalog/add-scraped`, request)
+      alert('Produit ajouté au catalogue avec succès!')
+    } catch (error) {
+      console.error('Error adding to catalog:', error)
+      alert('Erreur: ' + (error.response?.data?.detail || error.message))
+    }
+  }
+
+  const loadAllOrders = async () => {
+    setLoadingOrders(true)
+    try {
+      const response = await axios.get(`${API_URL}/api/orders/all`)
+      setAllOrders(response.data)
+    } catch (error) {
+      console.error('Error loading all orders:', error)
+    } finally {
+      setLoadingOrders(false)
     }
   }
 
@@ -125,6 +205,24 @@ export default function AdminDashboard({ user }) {
             count={pendingCount}
             highlight={pendingCount > 0}
           />
+          <TabButton 
+            active={activeTab === 'scraped'} 
+            onClick={() => {
+              setActiveTab('scraped')
+              loadScrapedProducts()
+            }}
+            label="Produits Scrapés"
+            icon={Download}
+          />
+          <TabButton 
+            active={activeTab === 'orders'} 
+            onClick={() => {
+              setActiveTab('orders')
+              loadAllOrders()
+            }}
+            label="Toutes les Commandes"
+            icon={ShoppingCart}
+          />
         </div>
       </div>
 
@@ -142,13 +240,24 @@ export default function AdminDashboard({ user }) {
             onRefresh={fetchData}
             userEmail={user.email}
           />
-        ) : (
+        ) : activeTab === 'reservations' ? (
           <ReservationsTab 
             reservations={reservations}
             items={items}
             onAction={handleReservationAction}
           />
-        )}
+        ) : activeTab === 'scraped' ? (
+          <ScrapedProductsTab 
+            products={scrapedProducts}
+            loading={loadingScraped}
+            onAddToCatalog={handleAddToCatalog}
+          />
+        ) : activeTab === 'orders' ? (
+          <AllOrdersTab 
+            orders={allOrders}
+            loading={loadingOrders}
+          />
+        ) : null}
       </div>
 
       {/* Add Equipment Modal */}
@@ -180,7 +289,7 @@ function StatCard({ label, value, icon: Icon, color = 'text-white', highlight = 
   )
 }
 
-function TabButton({ active, onClick, label, count, highlight = false }) {
+function TabButton({ active, onClick, label, count, highlight = false, icon: Icon }) {
   return (
     <button
       onClick={onClick}
@@ -189,6 +298,7 @@ function TabButton({ active, onClick, label, count, highlight = false }) {
       }`}
     >
       <span className="flex items-center space-x-2">
+        {Icon && <Icon className="w-4 h-4" />}
         <span>{label}</span>
         {count > 0 && (
           <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -642,5 +752,337 @@ function AddEquipmentModal({ userEmail, onClose, onSuccess }) {
         </form>
       </motion.div>
     </motion.div>
+  )
+}
+
+// Scraped Products Tab
+function ScrapedProductsTab({ products, loading, onAddToCatalog }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-lvmh-gold animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-display text-lvmh-black mb-2">
+              Produits Scrapés
+            </h2>
+            <p className="text-lvmh-gray-600">
+              {products.length} produits disponibles à ajouter au catalogue
+            </p>
+          </div>
+        </div>
+
+        {products.length === 0 ? (
+          <div className="text-center py-12">
+            <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">Aucun produit scrapé disponible</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Lancez un scraping depuis la page Scraper pour voir les produits ici
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-lvmh-black text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Vendeur</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Nom</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Modèle</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Prix</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Écran</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm font-medium">{product.vendor}</td>
+                    <td className="px-4 py-3 text-sm">{product.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{product.model || '-'}</td>
+                    <td className="px-4 py-3 text-sm font-semibold">
+                      {product.price ? `${product.price.toFixed(2)} €` : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{product.screen_size || '-'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <AddToCatalogButton 
+                        product={product}
+                        onAdd={onAddToCatalog}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// All Orders Tab
+function AllOrdersTab({ orders, loading }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-lvmh-gold animate-spin" />
+      </div>
+    )
+  }
+
+  if (!orders) {
+    return (
+      <div className="text-center py-12">
+        <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-500">Chargement des commandes...</p>
+      </div>
+    )
+  }
+
+  const { orders: orderList, statistics } = orders
+
+  return (
+    <div className="space-y-6">
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Commandes</p>
+              <p className="text-2xl font-display font-semibold text-lvmh-black mt-1">
+                {statistics.total}
+              </p>
+            </div>
+            <ShoppingCart className="w-8 h-8 text-lvmh-gold" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">En Attente</p>
+              <p className="text-2xl font-display font-semibold text-amber-600 mt-1">
+                {statistics.pending}
+              </p>
+            </div>
+            <Clock className="w-8 h-8 text-amber-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Approuvées</p>
+              <p className="text-2xl font-display font-semibold text-emerald-600 mt-1">
+                {statistics.approved}
+              </p>
+            </div>
+            <CheckCircle className="w-8 h-8 text-emerald-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Valeur Totale</p>
+              <p className="text-2xl font-display font-semibold text-lvmh-gold mt-1">
+                {statistics.total_value.toFixed(0)} €
+              </p>
+            </div>
+            <BarChart3 className="w-8 h-8 text-lvmh-gold" />
+          </div>
+        </div>
+      </div>
+
+      {/* Breakdown by Department and Type */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-lvmh-black mb-4 flex items-center">
+            <Building2 className="w-5 h-5 mr-2" />
+            Par Département
+          </h3>
+          <div className="space-y-2">
+            {Object.entries(statistics.by_department).map(([dept, count]) => (
+              <div key={dept} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{dept}</span>
+                <span className="text-sm font-semibold">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-lvmh-black mb-4 flex items-center">
+            <Package className="w-5 h-5 mr-2" />
+            Par Type d'Équipement
+          </h3>
+          <div className="space-y-2">
+            {Object.entries(statistics.by_type).map(([type, count]) => (
+              <div key={type} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 capitalize">{type}</span>
+                <span className="text-sm font-semibold">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Orders List */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-xl font-display text-lvmh-black mb-6">
+          Liste des Commandes
+        </h3>
+
+        {orderList.length === 0 ? (
+          <div className="text-center py-12">
+            <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">Aucune commande pour le moment</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-lvmh-black text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Utilisateur</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Département</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Équipement</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Prix</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {orderList.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div>
+                        <p className="font-medium">{order.user.name}</p>
+                        <p className="text-xs text-gray-500">{order.user.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {order.user.department}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div>
+                        <p className="font-medium capitalize">{order.equipment.type}</p>
+                        <p className="text-xs text-gray-500">
+                          {order.equipment.brand} {order.equipment.model}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold">
+                      {order.equipment.price.toFixed(2)} €
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <StatusBadge status={order.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function AddToCatalogButton({ product, onAdd }) {
+  const [showModal, setShowModal] = useState(false)
+  const [selectedType, setSelectedType] = useState('laptop')
+
+  const equipmentTypes = [
+    { id: 'laptop', label: 'Laptop' },
+    { id: 'screen', label: 'Écran' },
+    { id: 'smartphone', label: 'Smartphone' },
+    { id: 'tablet', label: 'Tablette' },
+    { id: 'switch_router', label: 'Switch/Router' },
+    { id: 'landline_phone', label: 'Téléphone fixe' }
+  ]
+
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className="text-lvmh-gold hover:underline font-medium"
+      >
+        Ajouter au catalogue
+      </button>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-semibold mb-4">Ajouter au catalogue</h3>
+            <p className="text-sm text-gray-600 mb-4">{product.name}</p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Type d'équipement</label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                {equipmentTypes.map(type => (
+                  <option key={type.id} value={type.id}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  onAdd(product, selectedType)
+                  setShowModal(false)
+                }}
+                className="flex-1 px-4 py-2 bg-lvmh-gold text-white rounded-lg hover:bg-lvmh-goldDark"
+              >
+                Ajouter
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </>
+  )
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    pending: 'bg-amber-100 text-amber-800',
+    approved: 'bg-emerald-100 text-emerald-800',
+    rejected: 'bg-red-100 text-red-800'
+  }
+
+  const labels = {
+    pending: 'En attente',
+    approved: 'Approuvée',
+    rejected: 'Rejetée'
+  }
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
+      {labels[status] || status}
+    </span>
   )
 }
