@@ -1,7 +1,37 @@
 import { motion } from 'framer-motion'
+import { useState, useRef } from 'react'
 import { ArrowRight, Leaf, Recycle, BarChart3, Shield, Play } from 'lucide-react'
 
 export default function Homepage({ onNavigate }) {
+  const [videoError, setVideoError] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef(null)
+
+  const handleVideoError = () => {
+    setVideoError(true)
+  }
+
+  const handlePlayClick = async () => {
+    if (videoRef.current) {
+      try {
+        const playPromise = videoRef.current.play()
+        if (playPromise !== undefined) {
+          await playPromise
+          setIsPlaying(true)
+        }
+      } catch (error) {
+        console.error('Error playing video:', error)
+        // Try to show controls even if autoplay fails
+        if (videoRef.current) {
+          videoRef.current.controls = true
+          setIsPlaying(true)
+        } else {
+          setVideoError(true)
+        }
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -91,16 +121,78 @@ export default function Homepage({ onNavigate }) {
           
           {/* Video Player */}
           <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
-            <img 
-              src="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
-              alt="LVMH LIFE 360 Program"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center cursor-pointer hover:bg-white transition-colors group">
-                <Play className="w-10 h-10 text-lvmh-black ml-1 group-hover:scale-110 transition-transform" />
+            {videoError ? (
+              // Fallback image if video fails to load
+              <div className="relative w-full h-full">
+                <img 
+                  src="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
+                  alt="LVMH LIFE 360 Program"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center cursor-pointer hover:bg-white transition-colors group">
+                    <Play className="w-10 h-10 text-lvmh-black ml-1 group-hover:scale-110 transition-transform" />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative w-full h-full">
+                <video 
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  poster="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
+                  onError={handleVideoError}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                  onLoadedMetadata={() => {
+                    // Video is ready
+                  }}
+                  controls={isPlaying}
+                  preload="metadata"
+                  playsInline
+                  muted={false}
+                >
+                  <source src="/video.mov" type="video/quicktime" />
+                  <source src="/video.mov" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                {!isPlaying && (
+                  <motion.div 
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: isPlaying ? 0 : 1 }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer hover:bg-black/30 transition-colors z-10"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handlePlayClick()
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handlePlayClick()
+                      }
+                    }}
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <motion.div 
+                      className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors group"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handlePlayClick()
+                      }}
+                    >
+                      <Play className="w-10 h-10 text-lvmh-black ml-1 group-hover:scale-110 transition-transform" />
+                    </motion.div>
+                  </motion.div>
+                )}
+              </div>
+            )}
           </div>
           
           <p className="text-center text-white/60 text-sm mt-6">

@@ -90,16 +90,18 @@ export default function CompareMode() {
   }
 
   // Calculate best options
-  const filledResults = results.filter(r => r !== null && r.tco_new > 0)
+  const filledResults = results.filter(r => r !== null && (r.tco_new > 0 || r.tco_refurb > 0))
   
   const getBestFinancial = () => {
     if (filledResults.length < 2) return -1
     let bestIdx = -1
     let bestTCO = Infinity
     results.forEach((r, i) => {
-      if (r && r.tco_new > 0) {
+      if (r) {
+        // For refurbished equipment, use tco_new (which is actually the refurbished TCO)
+        // For regular equipment, prefer refurbished if available, otherwise new
         const tco = r.tco_refurb || r.tco_new
-        if (tco < bestTCO) {
+        if (tco && tco > 0 && tco < bestTCO) {
           bestTCO = tco
           bestIdx = i
         }
@@ -174,7 +176,7 @@ export default function CompareMode() {
                 <thead>
                   <tr className="border-b-2 border-lvmh-gold/30">
                     <th className="text-left py-4 px-4 text-sm text-lvmh-gray-500 font-normal uppercase tracking-wider">Metric</th>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <th key={i} className="text-center py-4 px-4 text-sm font-medium text-lvmh-black">
                         {r.equipment_name}
                       </th>
@@ -184,23 +186,23 @@ export default function CompareMode() {
                 <tbody>
                   <tr className="border-b border-lvmh-gray-100">
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">Price (New)</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className="text-center py-4 px-4 text-sm font-medium">
-                        €{r.price_new?.toLocaleString() || 'N/A'}
+                        {r.price_new ? `€${r.price_new.toLocaleString()}` : 'N/A'}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-lvmh-gray-100">
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">Price (Refurbished)</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className="text-center py-4 px-4 text-sm font-medium text-emerald-600">
-                        {r.price_refurb ? `€${r.price_refurb.toLocaleString()}` : 'N/A'}
+                        {r.price_refurb ? `€${r.price_refurb.toLocaleString()}` : r.recommendation === 'Buy Refurbished' ? `€${r.price_new?.toLocaleString() || 'N/A'} (Refurb)` : 'N/A'}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-lvmh-gray-100">
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">TCO (5 years)</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className={`text-center py-4 px-4 text-sm font-medium ${bestFinancial === i ? 'text-lvmh-gold' : ''}`}>
                         €{(r.tco_refurb || r.tco_new)?.toLocaleString() || 'N/A'}
                         {bestFinancial === i && <Award className="w-4 h-4 inline ml-1 text-lvmh-gold" />}
@@ -209,7 +211,7 @@ export default function CompareMode() {
                   </tr>
                   <tr className="border-b border-lvmh-gray-100">
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">CO₂ Avoided</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className={`text-center py-4 px-4 text-sm font-medium ${bestCarbon === i ? 'text-emerald-600' : ''}`}>
                         {r.carbon_avoided_kg || 0} kg
                         {bestCarbon === i && <Leaf className="w-4 h-4 inline ml-1 text-emerald-600" />}
@@ -218,15 +220,15 @@ export default function CompareMode() {
                   </tr>
                   <tr className="border-b border-lvmh-gray-100">
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">Financial Savings</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className="text-center py-4 px-4 text-sm font-medium">
-                        {r.financial_savings_percent ? `${r.financial_savings_percent}%` : 'N/A'}
+                        {r.financial_savings_percent ? `${r.financial_savings_percent}%` : r.recommendation === 'Buy Refurbished' ? '~50%' : 'N/A'}
                       </td>
                     ))}
                   </tr>
                   <tr>
                     <td className="py-4 px-4 text-sm text-lvmh-gray-600">Recommendation</td>
-                    {results.map((r, i) => r && r.tco_new > 0 && (
+                    {results.map((r, i) => r && (r.tco_new > 0 || r.tco_refurb > 0) && (
                       <td key={i} className="text-center py-4 px-4">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           r.recommendation === 'Buy Refurbished' ? 'bg-emerald-100 text-emerald-700' :
@@ -353,12 +355,22 @@ function CompareSlot({ index, equipment, selected, result, onSelect, onClear, is
 
           {/* Metrics */}
           <div className="space-y-3">
-            <MetricRow icon={DollarSign} label="Price (New)" value={result.price_new ? `€${result.price_new.toLocaleString()}` : 'N/A'} />
             <MetricRow 
               icon={DollarSign} 
-              label="Price (Refurb)" 
-              value={result.price_refurb ? `€${result.price_refurb.toLocaleString()}` : 'N/A'} 
-              highlight={!!result.price_refurb}
+              label="Price (New)" 
+              value={result.price_new ? `€${result.price_new.toLocaleString()}` : 'N/A'} 
+            />
+            <MetricRow 
+              icon={DollarSign} 
+              label={result.recommendation === 'Buy Refurbished' ? "Price (Refurb)" : "Price (Refurb)"}
+              value={
+                result.price_refurb 
+                  ? `€${result.price_refurb.toLocaleString()}` 
+                  : result.recommendation === 'Buy Refurbished' 
+                    ? `€${result.price_new?.toLocaleString() || 'N/A'} (Refurb)`
+                    : 'N/A'
+              } 
+              highlight={!!result.price_refurb || result.recommendation === 'Buy Refurbished'}
             />
             <MetricRow icon={Leaf} label="CO₂ Avoided" value={`${result.carbon_avoided_kg || 0} kg`} />
             <MetricRow icon={Zap} label="Savings" value={result.financial_savings_percent ? `${result.financial_savings_percent}%` : 'N/A'} />
@@ -367,15 +379,24 @@ function CompareSlot({ index, equipment, selected, result, onSelect, onClear, is
           {/* TCO */}
           <div className="pt-4 border-t border-lvmh-gray-200">
             <p className="text-xs text-lvmh-gray-500 mb-2 uppercase tracking-wider">TCO (5 years)</p>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-lvmh-gray-600">New</span>
-              <span className="font-medium">€{result.tco_new?.toLocaleString() || 'N/A'}</span>
-            </div>
-            {result.tco_refurb && (
-              <div className="flex justify-between items-center mt-1">
+            {result.recommendation === 'Buy Refurbished' ? (
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-lvmh-gray-600">Refurbished</span>
-                <span className="font-medium text-emerald-600">€{result.tco_refurb.toLocaleString()}</span>
+                <span className="font-medium text-emerald-600">€{result.tco_new?.toLocaleString() || 'N/A'}</span>
               </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-lvmh-gray-600">New</span>
+                  <span className="font-medium">€{result.tco_new?.toLocaleString() || 'N/A'}</span>
+                </div>
+                {result.tco_refurb && (
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-sm text-lvmh-gray-600">Refurbished</span>
+                    <span className="font-medium text-emerald-600">€{result.tco_refurb.toLocaleString()}</span>
+                  </div>
+                )}
+              </>
             )}
             {result.lease_total > 0 && (
               <div className="flex justify-between items-center mt-1">
