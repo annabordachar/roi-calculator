@@ -91,15 +91,16 @@ export default function Homepage({ onNavigate }) {
           
           {/* Video Player */}
           <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
-            <video 
+            <img 
+              src="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
+              alt="LVMH LIFE 360 Program"
               className="w-full h-full object-cover"
-              controls
-              poster="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
-            >
-              <source src="/video.mov" type="video/quicktime" />
-              <source src="/video.mov" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center cursor-pointer hover:bg-white transition-colors group">
+                <Play className="w-10 h-10 text-lvmh-black ml-1 group-hover:scale-110 transition-transform" />
+              </div>
+            </div>
           </div>
           
           <p className="text-center text-white/60 text-sm mt-6">
