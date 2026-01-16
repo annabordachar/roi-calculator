@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-lvmh-cream text-lvmh-black font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-lvmh-black text-white px-8 py-3 text-sm font-medium tracking-wider uppercase
+           transition-all duration-300 hover:bg-lvmh-charcoal;
+  }
+  
+  .btn-gold {
+    @apply bg-lvmh-gold text-white px-8 py-3 text-sm font-medium tracking-wider uppercase
+           transition-all duration-300 hover:bg-lvmh-goldDark;
+  }
+  
+  .btn-outline {
+    @apply border border-lvmh-black text-lvmh-black px-8 py-3 text-sm font-medium tracking-wider uppercase
+           transition-all duration-300 hover:bg-lvmh-black hover:text-white;
+  }
+  
+  .input-luxury {
+    @apply w-full px-4 py-3 bg-white border border-lvmh-gray-200 
+           focus:border-lvmh-gold focus:ring-1 focus:ring-lvmh-gold focus:outline-none
+           transition-all duration-300 text-lvmh-black placeholder:text-lvmh-gray-400;
+  }
+  
+  .select-luxury {
+    @apply w-full px-4 py-3 bg-white border border-lvmh-gray-200 
+           focus:border-lvmh-gold focus:ring-1 focus:ring-lvmh-gold focus:outline-none
+           transition-all duration-300 text-lvmh-black appearance-none cursor-pointer;
+  }
+  
+  .card-luxury {
+    @apply bg-white shadow-luxury p-8 transition-all duration-300 hover:shadow-luxury-lg;
+  }
+  
+  .label-luxury {
+    @apply block text-xs font-medium tracking-wider uppercase text-lvmh-gray-500 mb-2;
+  }
+  
+  .divider-gold {
+    @apply w-16 h-0.5 bg-lvmh-gold;
+  }
+}
+
+/* Custom range slider */
+input[type="range"] {
+  @apply w-full h-1 bg-lvmh-gray-200 rounded-full appearance-none cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 bg-lvmh-gold rounded-full cursor-pointer
+         transition-all duration-200 hover:scale-110;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-4 h-4 bg-lvmh-gold rounded-full cursor-pointer border-0
+         transition-all duration-200 hover:scale-110;
+}
+
+/* Gauge animation */
+@keyframes fillGauge {
+  from {
+    stroke-dashoffset: 283;
+  }
+}
+
+.gauge-fill {
+  animation: fillGauge 1s ease-out forwards;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-lvmh-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-lvmh-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-lvmh-gray-400;
+}
