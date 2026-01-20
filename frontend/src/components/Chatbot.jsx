@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react'
 
-const GEMINI_API_KEY = 'AIzaSyDcDj6tJkEI44S4yKCW7GLNlNdN1KLwseg'
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 // Equipment catalog context for the AI
 const EQUIPMENT_CONTEXT = `
@@ -87,7 +87,7 @@ export default function Chatbot() {
       }))
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: {
@@ -186,7 +186,7 @@ export default function Chatbot() {
                 </div>
                 <div>
                   <h3 className="font-medium">Assistant Green IT</h3>
-                  <p className="text-xs text-lvmh-gray-300">Powered by Gemini AI</p>
+                  <p className="text-xs text-lvmh-gray-300">Powered by Gemini 2.5</p>
                 </div>
               </div>
               <button

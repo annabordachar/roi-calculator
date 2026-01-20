@@ -137,7 +137,7 @@ export default function Homepage({ onNavigate }) {
               </div>
             ) : (
               <div className="relative w-full h-full">
-                <video 
+                <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
                   poster="https://images.prismic.io/lvmh-com/Zk3H9Sol0Zci9WNZ_climat02.png?auto=format%2Ccompress&fit=max&w=3840"
@@ -153,8 +153,7 @@ export default function Homepage({ onNavigate }) {
                   playsInline
                   muted={false}
                 >
-                  <source src="/video.mov" type="video/quicktime" />
-                  <source src="/video.mov" type="video/mp4" />
+                  <source src="/video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isPlaying && (
