@@ -8,6 +8,12 @@ import uuid
 import csv
 import os
 import re
+import logging
+from scraper_service import ScraperService
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Green IT ROI Platform",
@@ -183,70 +189,151 @@ LEASING_RATES = {
 # DELL CATALOG
 # ============================================
 
+def clean_dell_url(url: str) -> str:
+    """Clean Dell URL to remove double domain"""
+    if not url:
+        return url
+    # Fix double domain pattern: https://www.dell.com//www.dell.com/...
+    # Look for the pattern where we have //www.dell.com/ after https://www.dell.com
+    if 'https://www.dell.com//www.dell.com/' in url:
+        # Replace the double domain with single domain
+        url = url.replace('https://www.dell.com//www.dell.com/', 'https://www.dell.com/', 1)
+    return url
+
+
 def load_dell_catalog():
-    """Load Dell laptops from CSV file"""
+    """Load Dell laptops from CSV files (both old format and new scraper format)"""
     dell_laptops = []
-    csv_path = os.path.join(os.path.dirname(__file__), "data", "dell_laptops.csv")
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
     
-    if not os.path.exists(csv_path):
-        return dell_laptops
+    # Try to load from new scraper format first (most recent)
+    scraper_csv_path = os.path.join(data_dir, "dell_catalog.csv")
+    if os.path.exists(scraper_csv_path):
+        try:
+            with open(scraper_csv_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    # New scraper format
+                    try:
+                        price = float(row.get('price', 0))
+                        if price <= 0:
+                            continue
+                        
+                        rating = None
+                        if row.get('rating'):
+                            try:
+                                rating = float(row.get('rating'))
+                            except:
+                                pass
+                        
+                        reviews = None
+                        if row.get('reviews_count'):
+                            try:
+                                reviews = int(row.get('reviews_count'))
+                            except:
+                                pass
+                        
+                        # Clean the URL
+                        link = clean_dell_url(row.get('link', ''))
+                        
+                        dell_laptops.append({
+                            "id": row.get('id', ''),
+                            "name": row.get('name', ''),
+                            "model": row.get('model', ''),
+                            "screen_size": row.get('screen_size', ''),
+                            "rating": rating,
+                            "reviews_count": reviews,
+                            "price": price,
+                            "link": link,
+                            "features": row.get('features', '')
+                        })
+                    except Exception as e:
+                        logger.warning(f"Error parsing row in scraper CSV: {e}")
+                        continue
+        except Exception as e:
+            logger.error(f"Error loading Dell catalog from scraper CSV: {e}")
     
-    try:
-        with open(csv_path, 'r', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                # Parse price (format: "941,40 €" or "1 495,78 €" -> 941.40 or 1495.78)
-                price_str = row.get('prix', '0')
-                # Remove € symbol and all spaces (including non-breaking spaces)
-                price_str = price_str.replace('€', '').replace(' ', '').replace('\u00a0', '').replace('\u202f', '').strip()
-                # Replace comma with dot for decimal
-                price_str = price_str.replace(',', '.')
-                # Remove any remaining dots except the last one (thousands separator)
-                if price_str.count('.') > 1:
-                    parts = price_str.rsplit('.', 1)
-                    price_str = parts[0].replace('.', '') + '.' + parts[1]
-                
-                try:
-                    price = float(price_str) if price_str else 0
-                except:
-                    price = 0
-                
-                # Skip items with no valid price
-                if price <= 0:
-                    continue
-                
-                # Parse rating
-                rating_str = row.get('note', 'N/A')
-                try:
-                    rating = float(rating_str) if rating_str and rating_str != 'N/A' else None
-                except:
-                    rating = None
-                
-                # Parse reviews count
-                reviews_str = row.get('nombre_avis', 'N/A')
-                try:
-                    reviews = int(reviews_str) if reviews_str and reviews_str != 'N/A' else None
-                except:
-                    reviews = None
-                
-                dell_laptops.append({
-                    "id": f"dell-{row.get('modele', '')}",
-                    "name": row.get('nom', ''),
-                    "model": row.get('modele', ''),
-                    "screen_size": row.get('taille_ecran', ''),
-                    "rating": rating,
-                    "reviews_count": reviews,
-                    "price": price,
-                    "link": row.get('lien', ''),
-                    "features": row.get('caracteristiques', '')
-                })
-    except Exception as e:
-        print(f"Error loading Dell catalog: {e}")
+    # Also load from old format if exists (fallback)
+    old_csv_path = os.path.join(data_dir, "dell_laptops.csv")
+    if os.path.exists(old_csv_path) and not dell_laptops:
+        try:
+            with open(old_csv_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    # Parse price (format: "941,40 €" or "1 495,78 €" -> 941.40 or 1495.78)
+                    price_str = row.get('prix', '0')
+                    # Remove € symbol and all spaces (including non-breaking spaces)
+                    price_str = price_str.replace('€', '').replace(' ', '').replace('\u00a0', '').replace('\u202f', '').strip()
+                    # Replace comma with dot for decimal
+                    price_str = price_str.replace(',', '.')
+                    # Remove any remaining dots except the last one (thousands separator)
+                    if price_str.count('.') > 1:
+                        parts = price_str.rsplit('.', 1)
+                        price_str = parts[0].replace('.', '') + '.' + parts[1]
+                    
+                    try:
+                        price = float(price_str) if price_str else 0
+                    except:
+                        price = 0
+                    
+                    # Skip items with no valid price
+                    if price <= 0:
+                        continue
+                    
+                    # Parse rating
+                    rating_str = row.get('note', 'N/A')
+                    try:
+                        rating = float(rating_str) if rating_str and rating_str != 'N/A' else None
+                    except:
+                        rating = None
+                    
+                    # Parse reviews count
+                    reviews_str = row.get('nombre_avis', 'N/A')
+                    try:
+                        reviews = int(reviews_str) if reviews_str and reviews_str != 'N/A' else None
+                    except:
+                        reviews = None
+                    
+                    # Clean the URL
+                    link = clean_dell_url(row.get('lien', ''))
+                    
+                    dell_laptops.append({
+                        "id": f"dell-{row.get('modele', '')}",
+                        "name": row.get('nom', ''),
+                        "model": row.get('modele', ''),
+                        "screen_size": row.get('taille_ecran', ''),
+                        "rating": rating,
+                        "reviews_count": reviews,
+                        "price": price,
+                        "link": link,
+                        "features": row.get('caracteristiques', '')
+                    })
+        except Exception as e:
+            logger.error(f"Error loading Dell catalog from old CSV: {e}")
     
-    return dell_laptops
+    # Remove duplicates based on ID
+    seen_ids = set()
+    unique_laptops = []
+    for laptop in dell_laptops:
+        if laptop.get('id') and laptop['id'] not in seen_ids:
+            seen_ids.add(laptop['id'])
+            unique_laptops.append(laptop)
+    
+    logger.info(f"Loaded {len(unique_laptops)} Dell laptops from catalog")
+    return unique_laptops
 
 # Load Dell catalog on startup
 DELL_CATALOG = load_dell_catalog()
+
+# Initialize scraper service
+SCRAPER_SERVICE = ScraperService(data_dir=os.path.join(os.path.dirname(__file__), "data"))
+
+
+def reload_dell_catalog():
+    """Reload Dell catalog from CSV files"""
+    global DELL_CATALOG
+    DELL_CATALOG = load_dell_catalog()
+    return len(DELL_CATALOG)
 
 
 # ============================================
@@ -547,6 +634,35 @@ def get_dell_laptop(model_id: str):
     return laptop
 
 
+@app.get("/api/scraped-products")
+def get_scraped_products(vendor: Optional[str] = None):
+    """Get all scraped products (for admin to add to catalog)"""
+    products = []
+    
+    # Get Dell products
+    if not vendor or vendor.lower() == "dell":
+        for laptop in DELL_CATALOG:
+            products.append({
+                "id": laptop["id"],
+                "vendor": "Dell",
+                "name": laptop["name"],
+                "model": laptop["model"],
+                "price": laptop["price"],
+                "screen_size": laptop.get("screen_size", ""),
+                "link": laptop.get("link", ""),
+                "features": laptop.get("features", ""),
+                "rating": laptop.get("rating"),
+                "reviews_count": laptop.get("reviews_count")
+            })
+    
+    # Can add HP and other vendors here
+    
+    return {
+        "products": products,
+        "total": len(products)
+    }
+
+
 @app.get("/api/catalog/{equipment_type}")
 def get_equipment_catalog(equipment_type: str):
     """Get equipment catalog by type (screen, smartphone, tablet, switch_router, phone, refurbished_*, meeting_room_screen)"""
@@ -582,6 +698,94 @@ def get_catalog_item(item_id: str):
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
+
+
+class AddScrapedProductRequest(BaseModel):
+    """Request to add a scraped product to equipment catalog"""
+    name: str
+    type: str  # laptop, screen, smartphone, tablet, etc.
+    brand: str
+    model: str
+    price_new: float
+    price_refurb: Optional[float] = None
+    co2_new: float
+    co2_refurb: Optional[float] = None
+    lifespan_new: int = 60
+    lifespan_refurb: Optional[int] = None
+    power_on: float = 0.05
+    power_standby: float = 0.005
+    source_co2: str = "ADEME"
+
+
+@app.post("/api/catalog/add-scraped")
+def add_scraped_product_to_catalog(request: AddScrapedProductRequest):
+    """Add a scraped product to the equipment catalog"""
+    # Generate ID
+    item_id = f"{request.type}-{request.brand}-{request.model}".lower().replace(' ', '-')
+    
+    # Check if already exists
+    existing = next((i for i in EQUIPMENT_CATALOG if i["id"] == item_id), None)
+    if existing:
+        raise HTTPException(status_code=400, detail="Product already exists in catalog")
+    
+    # Create new catalog item
+    new_item = {
+        "id": item_id,
+        "type": request.type,
+        "brand": request.brand,
+        "model": request.model,
+        "name": request.name,
+        "price_new": request.price_new,
+        "price_refurb": request.price_refurb,
+        "co2_new": request.co2_new,
+        "co2_refurb": request.co2_refurb,
+        "lifespan_new": request.lifespan_new,
+        "lifespan_refurb": request.lifespan_refurb,
+        "power_on": request.power_on,
+        "power_standby": request.power_standby,
+        "source_co2": request.source_co2
+    }
+    
+    # Add to in-memory catalog
+    EQUIPMENT_CATALOG.append(new_item)
+    
+    # Save to CSV file
+    csv_path = os.path.join(os.path.dirname(__file__), "data", "equipment_catalog.csv")
+    file_exists = os.path.exists(csv_path)
+    
+    fieldnames = [
+        "type", "brand", "model", "name", "price_new", "price_refurb",
+        "co2_new", "co2_refurb", "lifespan_new", "lifespan_refurb",
+        "power_on", "power_standby", "source_co2"
+    ]
+    
+    with open(csv_path, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        
+        row = {
+            "type": request.type,
+            "brand": request.brand,
+            "model": request.model,
+            "name": request.name,
+            "price_new": request.price_new,
+            "price_refurb": request.price_refurb or "",
+            "co2_new": request.co2_new,
+            "co2_refurb": request.co2_refurb or "",
+            "lifespan_new": request.lifespan_new,
+            "lifespan_refurb": request.lifespan_refurb or "",
+            "power_on": request.power_on,
+            "power_standby": request.power_standby,
+            "source_co2": request.source_co2
+        }
+        writer.writerow(row)
+    
+    return {
+        "success": True,
+        "message": "Product added to catalog",
+        "item": new_item
+    }
 
 
 @app.post("/api/calculate", response_model=ROIResponse)
@@ -638,6 +842,13 @@ def calculate_roi(request: ROIRequest):
             dell_partnership_price = price_new  # Store original price for display
             price_new = 1.0  # Partnership price
     
+    # Check if this is a refurbished equipment type (already refurbished)
+    is_refurbished_equipment = request.equipment_type.value.startswith('refurbished_')
+    
+    # Initialize variables for refurbished equipment comparison
+    estimated_new_price = None
+    estimated_new_co2 = None
+    
     has_refurb = price_refurb is not None
     duration_years = request.duration_months / 12
     
@@ -653,25 +864,43 @@ def calculate_roi(request: ROIRequest):
     # For calculations, use original price if partnership is active
     price_for_comparison = dell_partnership_price if dell_partnership_price else price_new
     
-    # TCO calculations
-    tco_new = calculate_tco(price_new, energy_annual, duration_years, False)
-    tco_refurb = calculate_tco(price_refurb, energy_annual, duration_years, True) if has_refurb else None
-    tco_savings = round(tco_new - tco_refurb, 2) if tco_refurb else None
-    
-    # Base metrics - use original price for fair comparison
-    financial_savings = calculate_financial_savings(price_for_comparison, price_refurb)
-    carbon_avoided = calculate_carbon_avoided(co2_new, co2_refurb)
+    # For refurbished equipment, we need to estimate the "new" equivalent for comparison
+    if is_refurbished_equipment:
+        # Estimate new price (typically 2x refurbished price)
+        estimated_new_price = price_new * 2
+        estimated_new_co2 = co2_new * 10  # Refurbished is ~10% of new CO2
+        # Use refurbished as "new" for TCO calculation
+        tco_new = calculate_tco(price_new, energy_annual, duration_years, True)  # Treat as refurbished
+        tco_refurb = None  # No refurbished option for already-refurbished equipment
+        tco_savings = None
+        # Calculate savings vs estimated new
+        financial_savings = calculate_financial_savings(estimated_new_price, price_new)
+        carbon_avoided = calculate_carbon_avoided(estimated_new_co2, co2_new)
+    else:
+        # Normal equipment with optional refurbished
+        tco_new = calculate_tco(price_new, energy_annual, duration_years, False)
+        tco_refurb = calculate_tco(price_refurb, energy_annual, duration_years, True) if has_refurb else None
+        tco_savings = round(tco_new - tco_refurb, 2) if tco_refurb else None
+        # Base metrics - use original price for fair comparison
+        financial_savings = calculate_financial_savings(price_for_comparison, price_refurb)
+        carbon_avoided = calculate_carbon_avoided(co2_new, co2_refurb)
     
     # ROI scores - use original price for fair comparison
     financial_roi = None
-    if has_refurb:
+    if is_refurbished_equipment:
+        # For refurbished equipment, compare to estimated new
+        cost_avoided = estimated_new_price - price_new
+        financial_roi = calculate_financial_roi(cost_avoided, price_new)
+        carbon_roi = calculate_carbon_roi(carbon_avoided, estimated_new_co2)
+        score = calculate_score(financial_roi, carbon_roi, request.alpha, request.beta)
+    elif has_refurb:
         cost_avoided = price_for_comparison - price_refurb
         financial_roi = calculate_financial_roi(cost_avoided, price_refurb)
-    
-    carbon_roi = calculate_carbon_roi(carbon_avoided, co2_new)
-    
-    # Final score
-    score = calculate_score(financial_roi, carbon_roi, request.alpha, request.beta) if has_refurb else None
+        carbon_roi = calculate_carbon_roi(carbon_avoided, co2_new)
+        score = calculate_score(financial_roi, carbon_roi, request.alpha, request.beta)
+    else:
+        carbon_roi = calculate_carbon_roi(carbon_avoided, co2_new) if carbon_avoided > 0 else 0
+        score = None
     
     # Recommendation - special case for Dell partnership
     if request.dell_partnership:
@@ -684,6 +913,9 @@ def calculate_roi(request: ROIRequest):
             partnership_savings = ((dell_partnership_price - 1) / dell_partnership_price) * 100
             financial_savings = round(partnership_savings, 0)
         financial_roi = 1.0  # Max ROI
+    elif is_refurbished_equipment:
+        recommendation = "Buy Refurbished"
+        reason = f"Refurbished equipment — Save €{estimated_new_price - price_new:,.0f} vs new, {carbon_avoided:.1f} kg CO₂ avoided"
     else:
         recommendation, reason = get_recommendation(
             score, has_refurb, tco_new, tco_refurb, lease_total, request.dell_partnership
@@ -1321,9 +1553,200 @@ def get_marketplace_stats():
     }
 
 
+@app.get("/api/orders/all")
+def get_all_orders():
+    """Get all orders/reservations with full details for admin view"""
+    orders = []
+    
+    for reservation in RESERVATIONS_DB:
+        # Find the equipment
+        equipment = next((e for e in MARKETPLACE_DB if e["id"] == reservation["equipment_id"]), None)
+        
+        if equipment:
+            order = {
+                "id": reservation["id"],
+                "equipment": {
+                    "id": equipment["id"],
+                    "type": equipment["type"],
+                    "brand": equipment["brand"],
+                    "model": equipment["model"],
+                    "condition": equipment["condition"],
+                    "price": equipment["price_manual"] or equipment["price_suggested"]
+                },
+                "user": {
+                    "id": reservation["user_id"],
+                    "name": reservation["user_name"],
+                    "email": reservation["user_email"],
+                    "department": reservation["user_department"]
+                },
+                "message": reservation.get("message"),
+                "status": reservation["status"],
+                "created_at": reservation["created_at"]
+            }
+            orders.append(order)
+    
+    # Sort by creation date (newest first)
+    orders.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    # Calculate statistics
+    total_orders = len(orders)
+    pending = len([o for o in orders if o["status"] == "pending"])
+    approved = len([o for o in orders if o["status"] == "approved"])
+    rejected = len([o for o in orders if o["status"] == "rejected"])
+    
+    # Group by department
+    by_department = {}
+    for order in orders:
+        dept = order["user"]["department"]
+        if dept not in by_department:
+            by_department[dept] = 0
+        by_department[dept] += 1
+    
+    # Group by equipment type
+    by_type = {}
+    for order in orders:
+        eq_type = order["equipment"]["type"]
+        if eq_type not in by_type:
+            by_type[eq_type] = 0
+        by_type[eq_type] += 1
+    
+    # Total value of approved orders
+    total_value = sum(
+        o["equipment"]["price"] 
+        for o in orders if o["status"] == "approved"
+    )
+    
+    return {
+        "orders": orders,
+        "statistics": {
+            "total": total_orders,
+            "pending": pending,
+            "approved": approved,
+            "rejected": rejected,
+            "by_department": by_department,
+            "by_type": by_type,
+            "total_value": round(total_value, 2)
+        }
+    }
+
+
+# ============================================
+# SCRAPER ENDPOINTS
+# ============================================
+
+@app.post("/api/scraper/scrape/{vendor}")
+def scrape_vendor(vendor: str, product_type: str = "laptop"):
+    """
+    Manually trigger scraping for a specific vendor
+    
+    Args:
+        vendor: Vendor name (dell, hp, etc.)
+        product_type: Type of product to scrape (default: laptop)
+    """
+    result = SCRAPER_SERVICE.scrape_vendor(vendor, product_type)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Scraping failed"))
+    
+    # Reload catalog if Dell was scraped
+    if vendor.lower() == "dell" and product_type == "laptop":
+        count = reload_dell_catalog()
+        result["catalog_reloaded"] = True
+        result["catalog_count"] = count
+    
+    return result
+
+
+@app.post("/api/scraper/scrape-all")
+def scrape_all_vendors(product_type: str = "laptop"):
+    """
+    Manually trigger scraping for all supported vendors
+    
+    Args:
+        product_type: Type of product to scrape (default: laptop)
+    """
+    result = SCRAPER_SERVICE.scrape_all_vendors(product_type)
+    
+    # Reload catalog if Dell was scraped
+    if "dell" in result.get("results", {}) and product_type == "laptop":
+        count = reload_dell_catalog()
+        result["catalog_reloaded"] = True
+        result["catalog_count"] = count
+    
+    return result
+
+
+@app.post("/api/scraper/reload-catalog")
+def reload_catalog():
+    """Manually reload the Dell catalog from CSV files"""
+    count = reload_dell_catalog()
+    return {
+        "success": True,
+        "message": f"Catalog reloaded successfully",
+        "product_count": count
+    }
+
+
+@app.post("/api/scraper/scheduler/start")
+def start_scheduler(hours: int = 24):
+    """
+    Start automatic scraping scheduler
+    
+    Args:
+        hours: How often to scrape (in hours, default: 24)
+    """
+    try:
+        SCRAPER_SERVICE.start_scheduler(schedule_hours=hours)
+        return {
+            "success": True,
+            "message": f"Scheduler started - will scrape every {hours} hours"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/scraper/scheduler/stop")
+def stop_scheduler():
+    """Stop the automatic scraping scheduler"""
+    try:
+        SCRAPER_SERVICE.stop_scheduler()
+        return {"success": True, "message": "Scheduler stopped"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/scraper/scheduler/status")
+def get_scheduler_status():
+    """Get scheduler status"""
+    return SCRAPER_SERVICE.get_scheduler_status()
+
+
+@app.get("/api/scraper/vendors")
+def get_supported_vendors():
+    """Get list of supported vendors"""
+    return {
+        "vendors": list(SCRAPER_SERVICE.scrapers.keys()),
+        "supported_product_types": ["laptop"]  # Can be extended
+    }
+
+
 # ============================================
 # RUN SERVER
 # ============================================
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    logger.info("Starting Green IT ROI Platform API")
+    # Optionally start scheduler on startup (uncomment if desired)
+    # SCRAPER_SERVICE.start_scheduler(schedule_hours=24)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Shutting down Green IT ROI Platform API")
+    SCRAPER_SERVICE.stop_scheduler()
+
 
 if __name__ == "__main__":
     import uvicorn
